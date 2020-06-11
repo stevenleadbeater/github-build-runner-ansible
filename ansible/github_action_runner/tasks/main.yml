@@ -1,0 +1,61 @@
+---
+
+- name: Run apt-get update
+  apt:
+    update_cache: yes
+  become: yes
+
+- name: Install the git package
+  shell: 'yes "" | add-apt-repository ppa:git-core/ppa && apt-get update && yes "y" | apt-get install git'
+  become: yes
+
+- name: Create the actions-runner directory if it does not exist
+  become: yes
+  file:
+    path: /opt/actions-runner
+    state: directory
+    mode: '0777'
+
+- name: Grab the self hosted runner code
+  get_url:
+    url: https://github.com/actions/runner/releases/download/v2.263.0/actions-runner-linux-x64-2.263.0.tar.gz
+    dest: /opt/actions-runner/actions-runner-linux-x64-2.263.0.tar.gz
+    mode: '0777'
+
+- name: Unzip the self hosted runner code
+  unarchive:
+    src: /opt/actions-runner/actions-runner-linux-x64-2.263.0.tar.gz
+    dest: /opt/actions-runner
+    remote_src: yes
+    mode: '0777'
+  become: yes
+
+- name: Configure the self hosted runner
+  shell: 'yes "" | ./config.sh --url https://github.com/albeego --token {{ token }}'
+  args:
+    chdir: /opt/actions-runner
+
+- name: Install the self hosted runner system d unit
+  shell: "./svc.sh install"
+  args:
+    chdir: /opt/actions-runner
+  become: yes
+
+- name: Munge the docker group on to the self hosted runner system d unit
+  lineinfile:
+    path: /etc/systemd/system/actions.runner.albeego.albeego-build-runner.service
+    insertafter: '^User=ubuntu'
+    line: 'Group=docker'
+  become: yes
+
+- name: Reload the daemon
+  shell: "systemctl daemon-reload"
+  args:
+    chdir: /etc/systemd/system
+  become: yes
+
+- name: Start the self hosted runner system d unit
+  shell: "./svc.sh start"
+  args:
+    chdir: /opt/actions-runner
+  become: yes

@@ -1,0 +1,6 @@
+---
+
+- name: Install ansible
+  apt: name={{ item }} state=latest update_cache=yes
+  loop: [ 'ansible' ]
+  become: yes

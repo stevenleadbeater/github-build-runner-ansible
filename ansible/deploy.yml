@@ -1,0 +1,8 @@
+---
+- name: Install AlbeeGo github action build runner
+  hosts: all
+  roles:
+    - role: python
+    - role: docker
+    - role: ansible
+    - role: github_action_runner

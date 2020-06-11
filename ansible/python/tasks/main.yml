@@ -1,0 +1,10 @@
+---
+
+- name: Install python 3
+  apt: name={{ item }} state=latest update_cache=yes
+  loop: [ 'python3', 'python3-pip' ]
+  become: yes
+
+- name: Install pytest and flake8
+  shell: "pip3 install flake8 pytest"
+  become: yes
